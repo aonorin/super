@@ -5,15 +5,13 @@ use std::cmp::Ordering;
 use std::path::{Path, PathBuf};
 use std::borrow::Cow;
 
-use serde::ser::{Serialize, Serializer};
-use crypto::digest::Digest;
-use crypto::md5::Md5;
-use crypto::sha1::Sha1;
-use crypto::sha2::Sha256;
+use serde::ser::{Serialize, SerializeStruct, Serializer};
+use {md5, sha1, sha2};
 use rustc_serialize::hex::ToHex;
 use regex::Regex;
 
-use {Result, Criticality};
+use error::*;
+use Criticality;
 
 /// Structure to store information about a vulnerability.
 #[derive(Debug, Clone, PartialEq, Eq, Ord)]
@@ -62,104 +60,95 @@ impl Vulnerability {
 }
 
 impl Serialize for Vulnerability {
-    fn serialize<S>(&self, serializer: &mut S) -> StdResult<(), S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
         where S: Serializer
     {
-        let mut state = serializer.serialize_struct("Vulnerability",
-                              if self.code.is_some() {
-                                  if self.start_line == self.end_line {
-                                      7
-                                  } else {
-                                      8
-                                  }
-                              } else {
-                                  4
-                              })?;
-        serializer.serialize_struct_elt(&mut state, "criticality", self.criticality)?;
-        serializer.serialize_struct_elt(&mut state, "name", self.name.as_str())?;
-        serializer.serialize_struct_elt(&mut state, "description", self.description.as_str())?;
-        serializer.serialize_struct_elt(&mut state, "file", &self.file)?;
+        let mut ser_struct = serializer.serialize_struct("Vulnerability",
+                                                         if self.code.is_some() {
+                                                             if self.start_line == self.end_line {
+                                                                 7
+                                                             } else {
+                                                                 8
+                                                             }
+                                                         } else {
+                                                             4
+                                                         })?;
+        ser_struct.serialize_field("criticality", &self.criticality)?;
+        ser_struct.serialize_field("name", self.name.as_str())?;
+        ser_struct.serialize_field("description", self.description.as_str())?;
+        ser_struct.serialize_field("file", &self.file)?;
         if self.code.is_some() {
-            serializer.serialize_struct_elt(&mut state,
-                                      "language",
-                                      self.file
-                                          .as_ref()
-                                          .unwrap()
-                                          .extension()
-                                          .unwrap()
-                                          .to_string_lossy())?;
+            ser_struct.serialize_field("language",
+                                       &self.file
+                                            .as_ref()
+                                            .unwrap()
+                                            .extension()
+                                            .unwrap()
+                                            .to_string_lossy())?;
             if self.start_line == self.end_line {
-                serializer.serialize_struct_elt(&mut state, "line", self.start_line.unwrap() + 1)?;
+                ser_struct.serialize_field("line", &(self.start_line.unwrap() + 1))?;
             } else {
-                serializer.serialize_struct_elt(&mut state, "start_line",
-                                                     self.start_line.unwrap()+1)?;
-                serializer.serialize_struct_elt(&mut state, "end_line",
-                                                     self.end_line.unwrap() + 1)?;
+                ser_struct.serialize_field("start_line", &(self.start_line.unwrap() + 1))?;
+                ser_struct.serialize_field("end_line", &(self.end_line.unwrap() + 1))?;
             }
-            serializer.serialize_struct_elt(&mut state, "code", &self.code)?;
+            ser_struct.serialize_field("code", &self.code)?;
         }
-        serializer.serialize_struct_end(state)?;
-        Ok(())
+        ser_struct.end()
     }
 }
 
 impl PartialOrd for Vulnerability {
     fn partial_cmp(&self, other: &Vulnerability) -> Option<Ordering> {
         Some((&self.criticality, &self.file, &self.start_line, &self.end_line, &self.name)
-            .cmp(&(&other.criticality,
-                   &other.file,
-                   &other.start_line,
-                   &other.end_line,
-                   &other.name)))
+                 .cmp(&(&other.criticality,
+                        &other.file,
+                        &other.start_line,
+                        &other.end_line,
+                        &other.name)))
     }
 }
 
 /// Structure to store.
 pub struct FingerPrint {
-    md5: [u8; 16],
-    sha1: [u8; 20],
+    md5: md5::Digest,
+    sha1: sha1::Digest,
     sha256: [u8; 32],
 }
 
 impl FingerPrint {
     /// Creates a new fingerprint.
     pub fn new<P: AsRef<Path>>(package: P) -> Result<FingerPrint> {
+        use sha2::Digest;
+
         let mut f = File::open(package)?;
         let mut buffer = Vec::with_capacity(f.metadata().unwrap().len() as usize);
         let _ = f.read_to_end(&mut buffer)?;
 
-        let mut md5 = Md5::new();
-        let mut sha1 = Sha1::new();
-        let mut sha256 = Sha256::new();
+        let mut sha1 = sha1::Sha1::new();
+        sha1.update(&buffer);
 
-        md5.input(&buffer);
-        sha1.input(&buffer);
+        let mut sha256 = sha2::Sha256::new();
         sha256.input(&buffer);
 
-        let mut fingerprint = FingerPrint {
-            md5: [0; 16],
-            sha1: [0; 20],
-            sha256: [0; 32],
-        };
-
-        md5.result(&mut fingerprint.md5);
-        sha1.result(&mut fingerprint.sha1);
-        sha256.result(&mut fingerprint.sha256);
-
-        Ok(fingerprint)
+        let mut sha256_res = [0u8; 32];
+        sha256_res.clone_from_slice(&sha256.result()[..]);
+        Ok(FingerPrint {
+               md5: md5::compute(&buffer),
+               sha1: sha1.digest(),
+               sha256: sha256_res,
+           })
     }
 }
 
 impl Serialize for FingerPrint {
-    fn serialize<S>(&self, serializer: &mut S) -> StdResult<(), S::Error>
+    fn serialize<S>(&self, serializer: S) -> StdResult<S::Ok, S::Error>
         where S: Serializer
     {
-        let mut state = serializer.serialize_struct("fingerprint", 3)?;
-        serializer.serialize_struct_elt(&mut state, "md5", self.md5.to_hex())?;
-        serializer.serialize_struct_elt(&mut state, "sha1", self.sha1.to_hex())?;
-        serializer.serialize_struct_elt(&mut state, "sha256", self.sha256.to_hex())?;
-        serializer.serialize_struct_end(state)?;
-        Ok(())
+        let mut ser_struct = serializer.serialize_struct("fingerprint", 3)?;
+        ser_struct.serialize_field("md5", &format!("{:x}", self.md5))?;
+        ser_struct.serialize_field("sha1", &self.sha1.to_string())?;
+        ser_struct.serialize_field("sha256", &self.sha256.to_hex())?;
+        ser_struct.end()
     }
 }
 
@@ -187,15 +176,15 @@ pub fn html_escape<'a, S: Into<Cow<'a, str>>>(input: S) -> Cow<'a, str> {
     if REGEX.is_match(&input) {
         let matches = REGEX.find_iter(&input);
         let mut output = String::with_capacity(input.len());
-        for (begin, end) in matches {
-            output.push_str(&input[last_match..begin]);
-            match &input[begin..end] {
+        for m in matches {
+            output.push_str(&input[last_match..m.start()]);
+            match &input[m.start()..m.end()] {
                 "<" => output.push_str("&lt;"),
                 ">" => output.push_str("&gt;"),
                 "&" => output.push_str("&amp;"),
                 _ => unreachable!(),
             }
-            last_match = end;
+            last_match = m.end();
         }
         output.push_str(&input[last_match..]);
         Cow::Owned(output)

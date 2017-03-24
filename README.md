@@ -2,7 +2,7 @@
 
 [![Build Status][linux_mac_build_img]][linux_mac_build]
 [![Build status][windows_build_img]][windows_build]
-[![Coverage Status][coverage_img]][coverage]
+[![codecov][coverage_img]][coverage]
 
 <img src="templates/super/img/logo.png" alt="SUPER Android Analyzer logo" title="SUPER Android Analyzer" width="150">
 
@@ -58,6 +58,8 @@ FLAGS:
         --bench       Show benchmarks for the analysis
         --force       If you'd like to force the auditor to do everything from the beginning
     -h, --help        Prints help information
+        --html        Generates the reults in HTML format
+        --json        Generates the reults in JSON format
         --open        Open the report in a browser once it is complete
     -q, --quiet       If you'd like a zen auditor that won't output anything in stdout
     -a, --test-all    Test all .apk files in the downloads directory
@@ -65,15 +67,16 @@ FLAGS:
     -v, --verbose     If you'd like the auditor to talk more than necessary
 
 OPTIONS:
-        --apktool <apktool>        Path to the apktool file
-        --dex2jar <dex2jar>        Where to store the jar files
-        --dist <dist>              Folder where distribution files will be extracted
-        --downloads <downloads>    Folder where the downloads are stored
-        --jd-cmd <jd-cmd>          Path to the jd-cmd file
-        --results <results>        Folder where to store the results
-        --rules <rules>            Path to a JSON rules file
-        --template <template>      Path to a results template file
-    -t, --threads <threads>        Number of threads to use
+        --apktool <apktool>                    Path to the apktool file
+        --dex2jar <dex2jar>                    Where to store the jar files
+        --dist <dist>                          Folder where distribution files will be extracted
+        --downloads <downloads>                Folder where the downloads are stored
+        --jd-cmd <jd-cmd>                      Path to the jd-cmd file
+        --min-criticality <min_criticality>    Set a minimum criticality to analyze (Critical, High, Medium, Low)
+        --results <results>                    Folder where to store the results
+        --rules <rules>                        Path to a JSON rules file
+        --template <template>                  Path to a results template file
+    -t, --threads <threads>                    Number of threads to use
 
 ARGS:
     <package>    The package string of the application to test
@@ -94,8 +97,8 @@ License, or (at your option) any later version.
 [linux_mac_build]: https://travis-ci.org/SUPERAndroidAnalyzer/super
 [windows_build_img]: https://ci.appveyor.com/api/projects/status/7xuikqyne4a2jn7e/branch/develop?svg=true
 [windows_build]: https://ci.appveyor.com/project/Razican/super/branch/develop
-[coverage_img]: https://coveralls.io/repos/github/SUPERAndroidAnalyzer/super/badge.svg?branch=develop
-[coverage]: https://coveralls.io/github/SUPERAndroidAnalyzer/super?branch=develop
+[coverage_img]: https://codecov.io/gh/SUPERAndroidAnalyzer/super/branch/develop/graph/badge.svg
+[coverage]: https://codecov.io/gh/SUPERAndroidAnalyzer/super
 [compile]: http://superanalyzer.rocks/download.html#compile-from-source
 [downloads]: http://superanalyzer.rocks/download.html
 [rustup]: https://www.rustup.rs/

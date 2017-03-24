@@ -1,6 +1,6 @@
 [package]
-name = "super"
-version = "0.3.0-dev"
+name = "super-analyzer"
+version = "0.4.0-dev"
 authors = [
     "Iban Eguia <razican@protonmail.ch>",
     "Jaime Salas <jaimesr@protonmail.ch>",
@@ -15,34 +15,39 @@ Secure, Unified, Powerful and Extensible Rust Android Analyzer. Core software\
 with CLI.\
 """
 keywords = ["Android", "security", "audit", "super", "analyzer"]
+categories = ["command-line-utilities", "development-tools"]
 build = "build.rs"
 
+[[bin]]
+name = "super"
+
 [dependencies]
-clap = "^2.19"
-colored = "^1.3.2"
-zip = "^0.2"
-xml-rs = "^0.3"
-serde = "^0.8"
-serde_json = "^0.8"
-yaml-rust = "0.3"
-chrono = { version = "^0.2", features = ["serde"] }
-toml = "^0.2"
-regex = "^0.1"
+clap = "^2.21"
+colored = "^1.4"
+xml-rs = "0.4"
+serde = "^0.9"
+serde_json = "^0.9"
+chrono = { version = "^0.3", features = ["serde"] }
+toml = "^0.3"
+regex = "^0.2"
 lazy_static = "^0.2"
-rust-crypto = "^0.2"
 rustc-serialize = "^0.3"
-open = "^1.1"
-bytecount = "0.1"
+open = "^1.2"
+bytecount = "^0.1"
 log = "^0.3"
-env_logger = "^0.3"
+env_logger = "^0.4"
+error-chain = "^0.10"
+md5 = "^0.3"
+sha1 = "^0.2"
+sha2 = "^0.4"
+abxml = { git = "https://github.com/gnieto/abxml-rs.git", branch = "develop" }
 
 [dependencies.handlebars]
-version = "^0.22"
-default-features = false
+version = "^0.25"
 features = ["serde_type"]
 
 [build-dependencies]
-clap = "^2.19"
+clap = "^2.21"
 
 [features]
 default = ["beta"]
@@ -70,9 +75,6 @@ assets = [
     # JD-CMD
     ["vendor/jd-cmd.jar", "usr/share/super/vendor/", "755"],
     ["vendor/jd-cmd.LICENSE.txt", "usr/share/super/vendor/", "644"],
-    # APKTool
-    ["vendor/apktool_2.2.0.jar", "usr/share/super/vendor/", "755"],
-    ["vendor/apktool.LICENSE.txt", "usr/share/super/vendor/", "644"],
     # Dex2Jar
     ["vendor/dex2jar-2.1-SNAPSHOT/LICENSE.txt", "usr/share/super/vendor/dex2jar-2.1-SNAPSHOT/", "644"],
     ["vendor/dex2jar-2.1-SNAPSHOT/NOTICE.txt", "usr/share/super/vendor/dex2jar-2.1-SNAPSHOT/", "644"],
@@ -102,7 +104,7 @@ assets = [
     # JavaScript
     ["templates/super/js/highlight.js.LICENSE", "usr/share/super/templates/super/js/", "644"],
     ["templates/super/js/highlight.pack.js", "usr/share/super/templates/super/js/", "644"],
-    ["templates/super/js/jquery-3.1.1.slim.min.js", "usr/share/super/templates/super/js/", "644"],
+    ["templates/super/js/jquery-3.2.0.slim.min.js", "usr/share/super/templates/super/js/", "644"],
     ["templates/super/js/src_nav.js", "usr/share/super/templates/super/js/", "644"],
     # templates
     ["templates/super/code.hbs", "usr/share/super/templates/super/", "644"],

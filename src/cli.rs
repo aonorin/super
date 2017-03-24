@@ -1,6 +1,6 @@
 use clap::{Arg, App};
 
-pub fn generate_cli() -> App<'static, 'static> {
+pub fn generate() -> App<'static, 'static> {
     App::new("SUPER Android Analyzer")
         .version(crate_version!())
         .author("SUPER Team <contact@superanalyzer.rocks>")
@@ -63,10 +63,6 @@ pub fn generate_cli() -> App<'static, 'static> {
         .arg(Arg::with_name("results")
             .long("results")
             .help("Folder where to store the results")
-            .takes_value(true))
-        .arg(Arg::with_name("apktool")
-            .long("apktool")
-            .help("Path to the apktool file")
             .takes_value(true))
         .arg(Arg::with_name("dex2jar")
             .long("dex2jar")
